@@ -35,7 +35,7 @@ class UI {
     }
 
     private void populateTable(final Skin skin) {
-        skin.getFont("default").getData().setScale(2.5f);
+       // skin.getFont("default").getData().setScale(2.5f);
         Table expanderTable = new Table();
         mixerBtn = new TextButton("Mix", skin);
 
