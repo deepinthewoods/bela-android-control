@@ -115,11 +115,7 @@
       disabledBackground: progressVerticalDisabled, disabledKnobBefore: progressVerticalKnobDisabled }
   },
   com.badlogic.gdx.scenes.scene2d.ui.ScrollPane$ScrollPaneStyle: {
-    default: { 
-	//hScrollKnob: scrollKnob, 
-	vScrollKnob: scrollKnobVertical
-	//, hScroll: scrollHorizontal, vScroll: scrollVertical 
-	},
+    default: { hScrollKnob: scrollKnob, vScrollKnob: scrollKnobVertical, hScroll: scrollHorizontal, vScroll: scrollVertical },
     clean: { hScrollKnob: scrollKnob, vScrollKnob: scrollKnobVertical },
     background: { background: scrollPane, hScrollKnob: scrollKnob, vScrollKnob: scrollKnobVertical, hScroll: scrollHorizontal, vScroll: scrollVertical }
   },

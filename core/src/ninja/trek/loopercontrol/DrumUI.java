@@ -3,7 +3,6 @@ package ninja.trek.loopercontrol;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
@@ -13,9 +12,12 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.IntArray;
+import com.badlogic.gdx.utils.LongArray;
+
+import java.nio.charset.Charset;
 
 public class DrumUI {
-    public static final int DRUM_TRIGGERS = 8;
+    public static final int DRUM_TRIGGERS = 32;
     public static final String[][] DRUM_SIGNAL_LABELS = new String[][]{
         {"K", "k", "S", "s", "H", "h"},
         {"C", "c", "R", "r", "", ""},
@@ -23,7 +25,9 @@ public class DrumUI {
     };
     public static final int DRUM_SIGNALS = DRUM_SIGNAL_LABELS[0].length;
     private static final int MAX_DRUM_TRIGGGERS = 256;
+    private static final String TAG = "Drum ui";
     private final DrumStateWidget[] drumStateWidgets = new DrumStateWidget[MAX_DRUM_TRIGGGERS];
+    private final Actor exp;
     private Table drumTable;
     private ScrollPane drumPane;
     public Table table = new Table();
@@ -31,6 +35,8 @@ public class DrumUI {
     private TextButton drumAddBtn;
     private DrumTriggerState[] drumTriggerStates = new DrumTriggerState[DRUM_TRIGGERS];
     private Table drumSelectTable;
+    public static final int DRUMSTATE_COMMAND = 2;
+    public static final int DRUMTEST_COMMAND = 3;
 
     private int currentDrumTriggerIndex;
     private ButtonGroup drumSelectGroup;
@@ -50,7 +56,7 @@ public class DrumUI {
 
     public DrumUI(Skin skin){
         for (int i = 0; i < DRUM_TRIGGERS; i++){
-            drumTriggerStates[i] = new DrumTriggerState();
+            drumTriggerStates[i] = new DrumTriggerState(i);
             drumTriggerStates[i].triggers.add(1 << i);
         }
 
@@ -61,11 +67,17 @@ public class DrumUI {
         }
         drumTable.setTransform(true);
         drumPane = new ScrollPane(drumTable, skin);
-        drumPane.setScrollbarsVisible(false);
-        drumPane.setScrollbarsOnTop(false);
-        //drumPane.setTouchable(Touchable.enabled);
+        drumPane.setupFadeScrollBars(0f, 0f);
+        drumPane.setScrollBarPositions(true, false);
+        drumPane.setOverscroll(false, false);
+        drumPane.setFlingTime(0f);
         table.add(drumPane);
-        //table.setTouchable(Touchable.enabled);
+        exp = new Actor();
+
+        for (int i = 0; i < 155; i++){
+            char ch = (char)i;
+            Gdx.app.log(TAG, "char " + ch + " int " + (int)ch);
+        }
     }
     private void initDrumTable(final Skin skin, final DrumUI ui) {
 
@@ -89,14 +101,14 @@ public class DrumUI {
                 @Override
                 public void clicked(InputEvent event, float x, float y) {
                     super.clicked(event, x, y);
-                    populateTable(in, ui, skin);
+                    populateTable(in);
                 }
             });
             drumSelectTable.add(triggerSelect).width(Gdx.graphics.getWidth()/DRUM_TRIGGERS);
             drumSelectGroup.add(triggerSelect);
         }
 
-        drumPageTable = new Table();
+       /* drumPageTable = new Table();
         TextButton drumPageL = new TextButton("<<", skin);
         TextButton drumPageR = new TextButton(">>", skin);
         drumPageL.addListener(new ClickListener(){
@@ -105,7 +117,7 @@ public class DrumUI {
                 currentDrumPage--;
                 if (currentDrumPage < 0)
                     currentDrumPage = DRUM_SIGNAL_LABELS.length-1;
-                populateTable(currentDrumTriggerIndex, ui, skin);
+                populateTable(currentDrumTriggerIndex);
             }
         });
         drumPageR.addListener(new ClickListener(){
@@ -114,13 +126,13 @@ public class DrumUI {
                 currentDrumPage++;
                 if (currentDrumPage >= DRUM_SIGNAL_LABELS.length)
                     currentDrumPage = 0;
-                populateTable(currentDrumTriggerIndex, ui, skin);
+                populateTable(currentDrumTriggerIndex);
             }
         });
         drumPageTable.add(drumPageL).fillX();
         drumPageTable.add(new Label("         ", skin)).expandX();
         drumPageTable.add(drumPageR);
-
+*/
         drumResetButton = new DrumResetWidget(skin, 0, ui);
         drumResetLabel = new Label("Resets:", skin);
         drumLinkButton = new DrumLinkWidget(skin, 0, ui);
@@ -158,27 +170,31 @@ public class DrumUI {
 
         drumSelectSpacer = new Label("", skin);
     }
-
-    public void populateTable(final int triggerIndex, final DrumUI ui, Skin skin) {
+    Table drumTableB = new Table();
+    public void populateTable(final int triggerIndex) {
         currentDrumTriggerIndex = triggerIndex;
         //baseTable.clearChildren();
         //baseTable.add(drumTable);
+
+        //Actor spacer = new Table();
+        //drumTable.add(spacer).expand().fill();
+
         drumTable.clearChildren();
-        drumTable.add(drumTriggerPresetTable).row();
-        drumTable.add(drumTriggerLabel).row();
-        drumTable.add(drumSelectTable).row();
-        drumTable.add(drumPageTable).row();
-        drumTable.add(drumSelectSpacer).row();
+        drumTableB.clearChildren();
+        //drumTable.add(exp).expand().fill();
+        drumTableB.add(drumTriggerPresetTable).row();
+        drumTableB.add(drumTriggerLabel).row();
+        drumTableB.add(drumSelectTable).row();
+        drumTableB.add(drumPageTable).row();
+        drumTableB.add(drumSelectSpacer).row();
+        drumTable.add(drumTableB).top().row();
 
         drumTriggerTable.clear();
 
-        drumTable.add(drumTriggerTable);
-
         for (int p = 0; p < drumTriggerStates[triggerIndex].triggers.size; p++){
-            int drumState = drumTriggerStates[triggerIndex].triggers.get(p);
+            long drumState = drumTriggerStates[triggerIndex].triggers.get(p);
             DrumStateWidget drumStateWidget = drumStateWidgets[p];
             drumStateWidget.set(drumState, currentDrumPage);
-
             drumTriggerTable.add(drumStateWidget);
             drumTriggerTable.row();
         }
@@ -190,7 +206,7 @@ public class DrumUI {
         drumTriggerTable.add(drumResetButton).row();
         drumTriggerTable.add(drumLinkLabel).row();
         drumTriggerTable.add(drumLinkButton).row();
-
+        drumTable.add(drumTriggerTable);
         drumPane.layout();
         drumPane.layout();
     }
@@ -204,23 +220,92 @@ public class DrumUI {
         int triggerIndex = currentDrumTriggerIndex;
         //drumTriggerStates[triggerIndex].triggers.add(0);
         drumTriggerStates[triggerIndex].triggers.insert(drumSequenceIndex, 0);
-        populateTable(triggerIndex, ui, skin);
+        populateTable(triggerIndex);
 
     }
     private void deleteDrumEntry(int drumSequenceIndex, DrumUI ui, Skin skin) {
         drumTriggerStates[currentDrumTriggerIndex].triggers.removeIndex(drumSequenceIndex);
-        populateTable(currentDrumTriggerIndex, ui, skin);
+        populateTable(currentDrumTriggerIndex);
     }
 
     public class DrumTriggerState{
-        public IntArray triggers = new IntArray();//bitmasks
-        public int currentIndex;
+        private final int index;
+        public LongArray triggers = new LongArray();//bitmasks
+
         public int reset;
         public int link;
+
+        public DrumTriggerState(int i) {
+            index = i;
+        }
+
+        @Override
+        public String toString() {
+            String s = "";
+            s += (char)DRUMTEST_COMMAND;
+            int len = 0;
+
+            for (int i = 120; i < 130; i++){
+                s += (char)((byte)i);
+                len++;
+            }
+            String ns = ""+(char)(len & 255);
+            ns += (char)((len>>8) & 255);
+            s = ns + s;
+            return s;
+        }
+        //@Override
+        public String toString2() {
+            String s = "";
+            s += (char)DRUMSTATE_COMMAND;
+            int len = 0;
+            s += (char)((reset)&255);
+            s += (char)((reset>>>8)&255);
+            s += (char)((reset>>>16)&255);
+            s += (char)((reset>>>24)&255);
+            len += 4;
+            //s += " ";
+            s += (char)((link)&255);
+            s += (char)((link>>>8)&255);
+            s += (char)((link>>>16)&255);
+            s += (char)((link>>>24)&255);
+            len += 4;
+
+            s += (char)((index)&255);
+            s += (char)((index>>>8)&255);
+            s += (char)((index>>>16)&255);
+            s += (char)((index>>>24)&255);
+            len += 4;
+            //s += " ";
+            s += (char)((triggers.size)&255);
+            s += (char)((triggers.size>>>8)&255);
+            s += (char)((triggers.size>>>16)&255);
+            s += (char)((triggers.size>>>24)&255);
+            len += 4;
+
+
+            //s += " ";
+
+            for (int i = 0; i < triggers.size; i++){
+                long v = triggers.get(i);
+                s += (char)((v)&255);
+                s += (char)((v>>>8)&255);
+                s += (char)((v>>>16)&255);
+                s += (char)((v>>>24)&255);
+                len+= 4;
+                //s += " ";
+            }
+            String ns = ""+(char)(len & 255);
+            ns += (char)((len>>8) & 255);
+            s = ns + s;
+            String str = new String(s.getBytes(), Charset.forName("UTF-8"));
+            return str;
+
+        }
     }
 
     private void changeDrumState(int drumIndex, boolean isChacked, int drumSequenceIndex) {
-        int val = drumTriggerStates[currentDrumTriggerIndex].triggers.get(drumSequenceIndex);
+        long val = drumTriggerStates[currentDrumTriggerIndex].triggers.get(drumSequenceIndex);
         int mask = 1 << (drumIndex + currentDrumPage*DRUM_SIGNALS);
         mask = ~mask ;
         val = val & mask;
@@ -247,6 +332,10 @@ public class DrumUI {
         if (isChacked)
             val |= (1 << (finalI) + currentDrumPage*DRUM_SIGNALS);
         drumTriggerStates[currentDrumTriggerIndex].link = val;
+    }
+
+    public DrumTriggerState[] getTriggerStates(){
+        return drumTriggerStates;
     }
 
     private class DrumStateWidget extends Table{
@@ -295,11 +384,11 @@ public class DrumUI {
             add(subBtn).width((Gdx.graphics.getWidth()/(DRUM_SIGNALS+1))/2);
         }
 
-        public void set(int drumState, int page) {
-            Gdx.app.log("drumwidget", "set " + drumState);
+        public void set(long drumState, int page) {
+            //Gdx.app.log("drumwidget", "set " + drumState + " page" + page);
 
             for (int i = 0; i < drumBtns.length; i++){
-                int bit = (drumState >> (i + page*DRUM_SIGNALS)) & 1;
+                long bit = (drumState >>> (i + page*DRUM_SIGNALS)) & 1;
                 if (bit == 1)
                     drumBtns[i].setChecked(true);
                 else drumBtns[i].setChecked(false);
@@ -341,7 +430,7 @@ public class DrumUI {
             Gdx.app.log("drumwidget", "set " + drumState);
 
             for (int i = 0; i < drumBtns.length; i++){
-                int bit = (drumState >> i) & 1;
+                int bit = (drumState >>> i) & 1;
                 if (bit == 1)
                     drumBtns[i].setChecked(true);
                 else drumBtns[i].setChecked(false);
@@ -380,7 +469,7 @@ public class DrumUI {
             Gdx.app.log("drumwidget", "set " + drumState);
 
             for (int i = 0; i < drumBtns.length; i++){
-                int bit = (drumState >> i) & 1;
+                int bit = (drumState >>> i) & 1;
                 if (bit == 1)
                     drumBtns[i].setChecked(true);
                 else drumBtns[i].setChecked(false);

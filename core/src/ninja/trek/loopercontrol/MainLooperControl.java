@@ -4,23 +4,31 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.utils.Array;
+
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+
+import cz.tchalupnik.libgdx.Toast;
 
 public class MainLooperControl extends ApplicationAdapter {
+	private static Array<String> longToastQueue = new Array<String>();
+
 	private final IBluetoothHandler bluetooth;
 	SpriteBatch batch;
-	Texture img;
-	ShapeRenderer shape;
-    private LooperTracksRenderer looperTracksRenderer;
+	ShapeBatch shape;
 
     public Stage stage;
     private UI ui;
 	private Skin skin;
 	private InputMultiplexer mux;
+	private static final List<Toast> toasts = new LinkedList<Toast>();
+	private static Toast.ToastFactory toastFactory;
 
 	public MainLooperControl(IBluetoothHandler bluetooth) {
 		this.bluetooth = bluetooth;
@@ -29,36 +37,72 @@ public class MainLooperControl extends ApplicationAdapter {
 	@Override
 	public void create () {
 		batch = new SpriteBatch();
-		img = new Texture("badlogic.jpg");
-		shape = new ShapeRenderer();
-        looperTracksRenderer = new LooperTracksRenderer();
+		shape = new ShapeBatch();
         //skin = new Skin(Gdx.files.internal("holo/skin/dark-mdpi/Holo-dark-mdpi.json"));
         skin = new Skin(Gdx.files.internal("flat/skin/skin.json"));
-        ui = new UI(skin);
+
+        toastFactory = new Toast.ToastFactory.Builder().font(skin.get(BitmapFont.class)).build();
         stage = new Stage();
+        ui = new UI(skin, shape, bluetooth, stage);
         ui.addTo(stage);
         mux = new InputMultiplexer();
         mux.addProcessor(stage);
         Gdx.input.setInputProcessor(mux);
+        bluetooth.onCreate();
     }
 
 	@Override
 	public void render () {
+		//stage.setDebugAll(true);
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		batch.begin();
 
-		//batch.draw(img, 0, 0);
-		batch.end();
-		bluetooth.update();
+		bluetooth.update(Gdx.graphics.getDeltaTime(), ui.drum);
 		stage.act(Gdx.graphics.getDeltaTime());
 		stage.draw();
+
+		batch.begin();
+		shape.draw();
+		batch.end();
+
+		Iterator<String> qIter = longToastQueue.iterator();
+		while (qIter.hasNext()){
+			String text = qIter.next();
+			toasts.add(toastFactory.create(text, Toast.Length.LONG));
+		}
+		longToastQueue.clear();
+		Iterator<Toast> it = toasts.iterator();
+		while(it.hasNext()) {
+			Toast t = it.next();
+			if (!t.render(Gdx.graphics.getDeltaTime())) {
+				it.remove(); // toast finished -> remove
+			} else {
+				break; // first toast still active, break the loop
+			}
+		}
+
+	}
+	/**
+	 * Displays long toast
+	 */
+	public static void toastLong(String text) {
+		longToastQueue.add(text);
+
+	}
+
+	/**
+	 * Displays short toast
+	 */
+	public static void toastShort(String text) {
+		toasts.add(toastFactory.create(text, Toast.Length.SHORT));
 	}
 	
 	@Override
 	public void dispose () {
 		batch.dispose();
-		img.dispose();
+		bluetooth.onDispose();
+		skin.dispose();
+		stage.dispose();
 		bluetooth.onDispose();
 	}
 

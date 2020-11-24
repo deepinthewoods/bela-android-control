@@ -1,5 +1,7 @@
 package ninja.trek.loopercontrol;
 
+import cz.tchalupnik.libgdx.Toast;
+
 public interface IBluetoothHandler {
     void onResume();
 
@@ -7,7 +9,11 @@ public interface IBluetoothHandler {
 
     void onPause();
 
-    void update();
+    void update(float delta, DrumUI drums);
 
+    void onCreate();
 
+    void queueSendAll();
+
+    void queueSendNote(DrumSetupUI.DrumSettingsData data, int noteInputIndex);
 }
