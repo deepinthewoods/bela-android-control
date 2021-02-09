@@ -22,6 +22,7 @@ public class MainLooperControl extends ApplicationAdapter {
 	private final IBluetoothHandler bluetooth;
 	SpriteBatch batch;
 	ShapeBatch shape;
+	public static int GRID_X = 9, GRID_Y = 16, GRID_W, GRID_H;
 
     public Stage stage;
     private UI ui;
@@ -29,6 +30,7 @@ public class MainLooperControl extends ApplicationAdapter {
 	private InputMultiplexer mux;
 	private static final List<Toast> toasts = new LinkedList<Toast>();
 	private static Toast.ToastFactory toastFactory;
+	public static int GRID_W4, GRID_W1, GRID_W2, GRID_W3, GRID_W34, GRID_H34;
 
 	public MainLooperControl(IBluetoothHandler bluetooth) {
 		this.bluetooth = bluetooth;
@@ -36,6 +38,16 @@ public class MainLooperControl extends ApplicationAdapter {
 
 	@Override
 	public void create () {
+		GRID_W = Gdx.graphics.getWidth()/GRID_X;
+		GRID_W4 = Gdx.graphics.getWidth()/4;
+		GRID_W1 = Gdx.graphics.getWidth();
+		GRID_W2 = Gdx.graphics.getWidth()/2;
+		GRID_W3 = Gdx.graphics.getWidth()/3;
+		GRID_W34 = Gdx.graphics.getWidth()/4 * 3;
+
+		GRID_H = Gdx.graphics.getHeight()/GRID_Y;
+		GRID_H34 = ((Gdx.graphics.getHeight()*3)/4)/GRID_Y;
+
 		batch = new SpriteBatch();
 		shape = new ShapeBatch();
         //skin = new Skin(Gdx.files.internal("holo/skin/dark-mdpi/Holo-dark-mdpi.json"));
@@ -49,6 +61,7 @@ public class MainLooperControl extends ApplicationAdapter {
         mux.addProcessor(stage);
         Gdx.input.setInputProcessor(mux);
         bluetooth.onCreate();
+
     }
 
 	@Override
